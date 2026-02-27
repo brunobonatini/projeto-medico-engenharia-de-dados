@@ -1,4 +1,4 @@
-# Projeto Médico – Engenharia de Dados (Architetura Lakehouse)
+# Projeto Médico – Engenharia de Dados (Arquitetura Lakehouse)
 
 Este projeto implementa uma arquitetura completa de dados baseada no conceito de Lakehouse, simulando um ambiente real de produção. A solução foi construída com containers Docker e integra orquestração, processamento distribuído, armazenamento em Data Lake, catálogo centralizado, modelagem analítica e visualização.
 
