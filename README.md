@@ -51,7 +51,7 @@ O Spark foi integrado ao MinIO via protocolo S3A e ao Hive Metastore para regist
 
 ---
 
-## MinIO – Data Lake (S3 Compatible)
+## MinIO – Data Lake (Compatibilidade com AWS S3)
 
 O MinIO atua como armazenamento principal do projeto, simulando um Data Lake em ambiente cloud. Ele é compatível com a API S3, o que permite replicar arquiteturas baseadas em Amazon S3 localmente.
 
