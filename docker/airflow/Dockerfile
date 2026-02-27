@@ -19,8 +19,6 @@ RUN curl -L https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-$
 ENV SPARK_HOME=/opt/spark
 ENV PATH=$PATH:$SPARK_HOME/bin
 
-# Instalar dependências da DAG
-COPY requirements-airflow.txt .
-RUN pip install --no-cache-dir -r requirements-airflow.txt
-
 USER airflow
+
+RUN pip install --no-cache-dir boto3 python-dotenv requests

@@ -8,10 +8,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Jupyter
-RUN pip install notebook
+RUN pip install --no-cache-dir notebook==6.5.6
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-notebook.txt .
+RUN pip install --no-cache-dir -r requirements-notebook.txt
 
 WORKDIR /projeto
 

@@ -21,6 +21,9 @@ def get_spark_session(app_name: str = "ProjetoMedico") -> SparkSession:
         # Delta
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        # Hive
+        .config("spark.hadoop.hive.metastore.uris", "thrift://hive-metastore:9083")
+        .enableHiveSupport()
         .getOrCreate()
     )
 
