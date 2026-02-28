@@ -1,4 +1,4 @@
-from pydantic_setting import BaseSettings
+from pydantic_settings import BaseSettings
 
 # Classe de configuração e definição das variáveis de ambiente e paths
 class Settings(BaseSettings):
