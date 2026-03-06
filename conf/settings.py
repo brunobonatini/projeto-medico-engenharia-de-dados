@@ -13,8 +13,11 @@ class Settings(BaseSettings):
 
     # Paths
     bronze_data: str
+    bronze_metadata: str
     silver_data: str
+    silver_metadata: str
     gold_data: str
+    gold_metadata: str
 
     class Config:
         env_file = '.env'

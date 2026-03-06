@@ -360,8 +360,14 @@ services:
       POSTGRES_USER: ${METASTORE_USER_KEY}
       POSTGRES_PASSWORD: ${METASTORE_SECRET_KEY}
       POSTGRES_DB: ${METASTORE_DB}
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
     volumes:
       - hive-metastore-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${METASTORE_USER_KEY}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   # HIVE METASTORE
@@ -373,15 +379,18 @@ services:
     environment:
       SERVICE_NAME: metastore
       DB_DRIVER: postgres
-      HIVE_METASTORE_DB_TYPE: postgres
-      HIVE_METASTORE_DB_HOSTNAME: postgres-metastore
-      HIVE_METASTORE_DB_NAME: ${METASTORE_DB}
-      HIVE_METASTORE_DB_USER: ${METASTORE_USER_KEY}
-      HIVE_METASTORE_DB_PASSWORD: ${METASTORE_SECRET_KEY}
+      SERVICE_OPTS: >
+        -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
+        -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-metastore:5432/${METASTORE_DB}
+        -Djavax.jdo.option.ConnectionUserName=${METASTORE_USER_KEY}
+        -Djavax.jdo.option.ConnectionPassword=${METASTORE_SECRET_KEY}
+      SKIP_SCHEMA_INIT: "true"
+      HADOOP_CLIENT_OPTS: "-Xmx1G"
     ports:
       - "9083:9083"
     depends_on:
-      - postgres-metastore
+      postgres-metastore:
+        condition: service_healthy
     restart: always
 
   # TRINO
@@ -390,6 +399,8 @@ services:
     container_name: trino
     ports:
       - "8085:8080"
+    env_file:
+      - .env
     volumes:
       - ./docker/trino/catalog:/etc/trino/catalog
     depends_on:
@@ -419,6 +430,8 @@ services:
     depends_on:
       - trino
     restart: always
+    env_file:
+      - .env
 
   # NOTEBOOK
   notebook:
