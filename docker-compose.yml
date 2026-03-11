@@ -294,7 +294,7 @@ services:
     command: >
       bash -c "
       $$SPARK_HOME/sbin/start-master.sh &&
-      tail -f /dev/null
+      sleep infinity
       "
     ports:
       - "7077:7077"
@@ -316,7 +316,7 @@ services:
     command: >
       bash -c "
       $$SPARK_HOME/sbin/start-worker.sh spark://spark-master:7077 &&
-      tail -f /dev/null
+      sleep infinity
       "
     volumes:
       - .:/projeto
@@ -338,6 +338,11 @@ services:
       - "9001:9001"
     volumes:
       - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   minio-init:
     image: minio/mc
@@ -346,9 +351,15 @@ services:
         condition: service_started
     entrypoint: >
       /bin/sh -c "
-      sleep 5;
-      mc alias set local http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY};
-      mc mb local/datalake;
+      until mc alias set local http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}; do
+        sleep 2;
+      done;
+      mc mb -p local/datalake;
+      mc mb -p local/datalake/warehouse;
+      mc mb -p local/datalake/bronze;
+      mc mb -p local/datalake/silver;
+      mc mb -p local/datalake/gold;
+      echo 'Buckets created successfully';
       exit 0;
       "
   # POSTGRES METASTORE
@@ -372,26 +383,48 @@ services:
 
   # HIVE METASTORE
   hive-metastore:
-    image: apache/hive:3.1.3
+    build: ./docker/hive/
     container_name: hive-metastore
     env_file:
       - .env
     environment:
       SERVICE_NAME: metastore
       DB_DRIVER: postgres
+      IS_RESUME: "true"
+      AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY}
+      AWS_REGION: us-east-1
       SERVICE_OPTS: >
         -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
         -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-metastore:5432/${METASTORE_DB}
         -Djavax.jdo.option.ConnectionUserName=${METASTORE_USER_KEY}
         -Djavax.jdo.option.ConnectionPassword=${METASTORE_SECRET_KEY}
-      SKIP_SCHEMA_INIT: "true"
-      HADOOP_CLIENT_OPTS: "-Xmx1G"
+      HADOOP_CLIENT_OPTS: >
+        -Xmx1g
+        -Dfs.s3a.endpoint=http://minio:9000
+        -Dfs.s3a.endpoint.region=us-east-1
+        -Dfs.s3a.access.key=${MINIO_ACCESS_KEY}
+        -Dfs.s3a.secret.key=${MINIO_SECRET_KEY}
+        -Dfs.s3a.path.style.access=true
+        -Dfs.s3a.connection.ssl.enabled=false
+        -Dfs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+        -Dfs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
+        -Dcom.amazonaws.services.s3.enableV4=true
+    command: >
+      bash -c "/opt/hive/bin/hive --service metastore"
     ports:
       - "9083:9083"
     depends_on:
       postgres-metastore:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "timeout 2 bash -c '</dev/tcp/localhost/9083'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
+    volumes:
+      - ./docker/hive/conf/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
 
   # TRINO
   trino:
@@ -404,7 +437,8 @@ services:
     volumes:
       - ./docker/trino/catalog:/etc/trino/catalog
     depends_on:
-      - hive-metastore
+      hive-metastore:
+        condition: service_healthy
     restart: always
   
   # DBT
@@ -420,6 +454,7 @@ services:
     tty: true
     env_file:
       - .env
+    restart: unless-stopped
   
   # METABASE
   metabase:
@@ -428,6 +463,9 @@ services:
     ports:
       - "3000:3000"
     depends_on:
+      - spark-master
+      - minio
+      - hive-metastore
       - trino
     restart: always
     env_file:

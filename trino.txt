@@ -1,0 +1,19 @@
+show catalogs;
+
+show schemas from hive;
+
+show tables from hive.lakehouse;
+
+show schemas from delta;
+
+select *
+from delta.lakehouse.controle_execucao;
+
+CREATE SCHEMA delta.bronze
+WITH (location = 's3a://datalake/bronze');
+
+CREATE SCHEMA delta.silver
+WITH (location = 's3a://datalake/silver');
+
+CREATE SCHEMA delta.silver
+WITH (location = 's3a://datalake/gold');
