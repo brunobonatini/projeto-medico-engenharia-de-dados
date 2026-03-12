@@ -1,3 +1,5 @@
+# Projeto em construção...
+
 # Projeto Médico – Engenharia de Dados (Arquitetura Lakehouse)
 
 Este projeto implementa uma arquitetura completa de dados baseada no conceito de Lakehouse, simulando um ambiente real de produção. A solução foi construída com containers Docker e integra orquestração, processamento distribuído, armazenamento em Data Lake, catálogo centralizado, modelagem analítica e visualização.
@@ -13,9 +15,9 @@ A arquitetura foi desenhada separando claramente responsabilidades entre orquest
 O fluxo geral funciona da seguinte forma:
 
 1. O Airflow orquestra a execução do pipeline.
-2. Dados são extraídos de uma fonte externa e armazenados no Data Lake (MinIO).
+2. Dados são extraídos de uma fonte externa via API e armazenados no Data Lake (MinIO).
 3. O Spark processa e transforma os dados em formato Delta Lake.
-4. As tabelas são registradas no Hive Metastore.
+4. As tabelas são registradas no catalogo Hive Metastore.
 5. O Trino consulta os dados diretamente do Data Lake.
 6. O dbt realiza modelagem analítica (camada Gold).
 7. O Metabase consome os dados para visualização.

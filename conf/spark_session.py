@@ -37,9 +37,10 @@ def get_spark_session(app_name: str = "Projeto-Medico") -> SparkSession:
 
         # Performance
         .config("spark.sql.shuffle.partitions", "200")
-        .config("spark.executor.memory", "4g")
-        .config("spark.driver.memory", "4g")
+        .config("spark.executor.memory", "2g")
+        .config("spark.driver.memory", "2g")
         .config("spark.sql.files.maxPartitionBytes", "134217728")
+        .config("spark.sql.files.openCostInBytes", 134217728)
         .config("spark.sql.debug.maxToStringFields", "5000")
     )
 
